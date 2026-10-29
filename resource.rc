@@ -1,0 +1,33 @@
+#include <winres.h>
+
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+
+101 ICON "app.ico"
+1 24 "app.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "FileDescription", "Qinglong Env Editor"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "qinglong_env_editor"
+            VALUE "OriginalFilename", "qinglong_env_editor.exe"
+            VALUE "ProductName", "Qinglong Env Editor"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
