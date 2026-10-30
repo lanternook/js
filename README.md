@@ -26,7 +26,7 @@ g++ -Os -s -mwindows -D_GLIBCXX_USE_CXX11_ABI=0 -static-libgcc -static-libstdc++
 qinglong_env_editor.cpp   主源码（Win32 API，DPI 感知）
 resource.rc               资源脚本（图标 + manifest）
 app.manifest              DPI 感知清单（资源 ID 1 / 类型 24）
-app.ico                   应用图标（未入库，自行放置同名文件即可）
+app.ico                   应用图标
 NOTES.md                  开发备忘（踩坑记录）
 ```
 
