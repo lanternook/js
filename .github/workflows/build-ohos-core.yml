@@ -95,12 +95,21 @@ jobs:
       - name: Locate OHOS native SDK
         run: |
           set -euxo pipefail
-          CLANG=$(find "$GITHUB_WORKSPACE/ohos-native" -type f -path '*/llvm/bin/clang' -print -quit)
+          BIN="$GITHUB_WORKSPACE/ohos-native/native/llvm/bin"
+          echo "--- llvm/bin contents ---"
+          ls -la "$BIN" | head -20
+          # The OHOS SDK ships clang as a symlink, so -type f misses it.
+          if [ -e "$BIN/clang" ]; then
+            CLANG="$BIN/clang"
+          else
+            CLANG=$(find "$GITHUB_WORKSPACE/ohos-native" -path '*/llvm/bin/clang' -print -quit)
+          fi
           test -n "$CLANG"
           NATIVE=$(dirname "$(dirname "$(dirname "$CLANG")")")
           echo "OHOS_NATIVE_SDK=$NATIVE" >> "$GITHUB_ENV"
           echo "OHOS_SYSROOT=$NATIVE/sysroot" >> "$GITHUB_ENV"
           echo "OHOS clang: $CLANG"
+          ls -l "$CLANG"
           "$CLANG" --version | head -3
           test -d "$NATIVE/sysroot"
 
