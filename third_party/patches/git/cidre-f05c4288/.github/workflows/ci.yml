@@ -1,0 +1,50 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+        matrix:
+          os: [macos-15]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dtolnay/rust-toolchain@stable
+    - name: ls apps
+      run: ls -la /Applications
+    - name: os ver
+      run: sw_vers
+    - name: switch xcode
+      run: sudo xcode-select -s '/Applications/Xcode_16.app'
+    - name: list sdks
+      run: xcodebuild -showsdks
+    - name: macosx sdk version
+      run: xcodebuild -version -sdk macosx
+
+    - name: add targets
+      run: >
+          rustup target add aarch64-apple-ios &&
+          rustup target add aarch64-apple-ios-sim &&
+          rustup target add x86_64-apple-darwin &&
+          rustup +nightly target add aarch64-apple-darwin &&
+          rustup +nightly target add aarch64-apple-ios &&
+          rustup component add rust-src --toolchain nightly-aarch64-apple-darwin
+    
+    - name: Build
+      run: ./build.sh
+
+    - name: Test ns
+      run: 'cargo t --features="macos_14_0" ns::'
+
+    - name: Test cf
+      run: 'cargo t --features="macos_14_0" cf::'

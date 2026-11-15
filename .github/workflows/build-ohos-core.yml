@@ -1,0 +1,162 @@
+name: Build OHOS librustdesk.so (navkeys patch)
+
+on:
+  push:
+    branches: [ohos-navkeys-build]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      OHOS_SDK_VERSION: 6.1-Release
+      VCPKG_ROOT: ${{ github.workspace }}/third_party/vcpkg
+      CARGO_TERM_COLOR: always
+      CARGO_NET_RETRY: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                      /usr/local/lib/android /usr/share/swift 2>/dev/null || true
+          df -h /
+
+      - name: Install system packages
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build perl nasm yasm pkg-config \
+            clang libclang-dev patchelf curl wget unzip zip ca-certificates aria2 \
+            autoconf automake libtool libssl-dev file
+          CLANG_SO=$(find /usr/lib -name 'libclang.so*' -print -quit)
+          echo "LIBCLANG_PATH=$(dirname "$CLANG_SO")" >> "$GITHUB_ENV"
+          echo "libclang: $CLANG_SO"
+
+      - name: Setup Rust 1.100.0 + OHOS target
+        run: |
+          set -euxo pipefail
+          rustup toolchain install 1.100.0 --profile minimal
+          rustup default 1.100.0
+          rustup target add aarch64-unknown-linux-ohos --toolchain 1.100.0
+          rustc --version
+          rustc --print target-list | grep ohos
+
+      - name: Cache cargo registry / target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            third_party/rustdesk/target
+          key: cargo-ohos-${{ hashFiles('third_party/rustdesk/Cargo.lock') }}-v1
+          restore-keys: cargo-ohos-
+
+      - name: Cache OHOS native SDK
+        id: sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ohos-native
+          key: ohos-native-${{ env.OHOS_SDK_VERSION }}-v1
+
+      - name: Download + extract OHOS SDK (linux/native only)
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euxo pipefail
+          URL="https://repo.huaweicloud.com/openharmony/os/${OHOS_SDK_VERSION}/ohos-sdk-windows_linux-public.tar.gz"
+          aria2c -x 16 -s 16 -k 1M -m 5 --retry-wait=10 -t 120 \
+                 -o ohos-sdk.tar.gz "$URL"
+          ls -lh ohos-sdk.tar.gz
+          mkdir -p sdk-unpack
+          echo "--- candidate native zips ---"
+          tar -tzf ohos-sdk.tar.gz | grep -i 'linux/.*native.*\.zip' | head -10 || true
+          tar -xzf ohos-sdk.tar.gz -C sdk-unpack --wildcards 'linux/native-*.zip' \
+            || tar -xzf ohos-sdk.tar.gz -C sdk-unpack --wildcards '*/linux/native-*.zip' \
+            || tar -xzf ohos-sdk.tar.gz -C sdk-unpack --wildcards '*native-*.zip'
+          echo "--- all extracted native zips ---"
+          find sdk-unpack -name 'native-*.zip' -print
+          ZIP=$(find sdk-unpack -path '*linux*' -name 'native-*.zip' -print -quit)
+          if [ -z "$ZIP" ]; then
+            ZIP=$(find sdk-unpack -name 'native-*.zip' -print -quit)
+          fi
+          test -n "$ZIP"
+          echo "native zip: $ZIP"
+          mkdir -p ohos-native
+          unzip -q -o "$ZIP" -d ohos-native
+          rm -f ohos-sdk.tar.gz
+          rm -rf sdk-unpack
+          find ohos-native -maxdepth 3 -type d | head -25
+          df -h /
+
+      - name: Locate OHOS native SDK
+        run: |
+          set -euxo pipefail
+          CLANG=$(find "$GITHUB_WORKSPACE/ohos-native" -type f -path '*/llvm/bin/clang' -print -quit)
+          test -n "$CLANG"
+          NATIVE=$(dirname "$(dirname "$(dirname "$CLANG")")")
+          echo "OHOS_NATIVE_SDK=$NATIVE" >> "$GITHUB_ENV"
+          echo "OHOS_SYSROOT=$NATIVE/sysroot" >> "$GITHUB_ENV"
+          echo "OHOS clang: $CLANG"
+          "$CLANG" --version | head -3
+          test -d "$NATIVE/sysroot"
+
+      - name: Cache vcpkg installed tree
+        id: vcpkg-cache
+        uses: actions/cache@v4
+        with:
+          path: third_party/vcpkg/installed
+          key: vcpkg-arm64-linux-${{ hashFiles('third_party/rustdesk/res/vcpkg-triplets/arm64-ohos.cmake') }}-v1
+
+      - name: Bootstrap vcpkg
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git third_party/vcpkg
+          third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+          cp third_party/rustdesk/res/vcpkg-triplets/arm64-ohos.cmake \
+             third_party/rustdesk/res/vcpkg-triplets/arm64-linux.cmake
+
+      - name: vcpkg cross-build libvpx / libyuv / opus / aom
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euxo pipefail
+          export VCPKG_ROOT="$GITHUB_WORKSPACE/third_party/vcpkg"
+          export OHOS_NATIVE_SDK="$OHOS_NATIVE_SDK"
+          export OHOS_SYSROOT="$OHOS_NATIVE_SDK/sysroot"
+          "$VCPKG_ROOT/vcpkg" install libvpx libyuv opus aom \
+            --triplet arm64-linux \
+            --overlay-triplets="$GITHUB_WORKSPACE/third_party/rustdesk/res/vcpkg-triplets" \
+            --clean-after-build
+          ls -lh "$VCPKG_ROOT/installed/arm64-linux/lib" | head -20
+
+      - name: Build librustdesk.so
+        id: core
+        run: |
+          set -euxo pipefail
+          export OHOS_NATIVE_SDK
+          export OHOS_SYSROOT="$OHOS_NATIVE_SDK/sysroot"
+          export VCPKG_ROOT="$GITHUB_WORKSPACE/third_party/vcpkg"
+          export LIBCLANG_PATH
+          export CARGO="$HOME/.cargo/bin/cargo"
+          bash scripts/build-rustdesk-core.sh 2>&1 | tee build-core.log
+          ls -lh rustdesk/libs/arm64-v8a/librustdesk.so
+          file rustdesk/libs/arm64-v8a/librustdesk.so
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-core-log
+          path: build-core.log
+          if-no-files-found: ignore
+
+      - name: Upload librustdesk.so
+        uses: actions/upload-artifact@v4
+        with:
+          name: librustdesk-ohos-navkeys
+          path: rustdesk/libs/arm64-v8a/librustdesk.so
+          if-no-files-found: error

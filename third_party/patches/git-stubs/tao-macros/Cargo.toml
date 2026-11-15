@@ -1,0 +1,7 @@
+[package]
+name = "tao-macros"
+version = "0.1.2"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

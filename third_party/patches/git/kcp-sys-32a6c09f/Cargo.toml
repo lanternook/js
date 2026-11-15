@@ -1,0 +1,30 @@
+[package]
+name = "kcp-sys"
+version = "0.1.0"
+edition = "2021"
+authors = ["sunsijie@buaa.edu.cn"]
+description = "Safe bindings for KCP transport protocol"
+repository = "https://github.com/EasyTier/kcp-sys"
+readme = "README.md"
+license = "MIT"
+keywords = ["kcp", "bindings"]
+
+[dependencies]
+bytes = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7.13" }
+dashmap = "6.1.0"
+zerocopy = { version = "0.7", features = ["derive", "simd"] }
+bitflags = "2.8.0"
+parking_lot = "0.12.3"
+auto_impl = "1.2.1"
+thiserror = "2.0.11"
+anyhow = "1.0.95"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+log = "0.4"
+rand = "0.8.5"
+
+[build-dependencies]
+bindgen = { version="0.71.1", default-features=false, features=["runtime", "which-rustfmt"]}
+cc = "1.2.10"

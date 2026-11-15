@@ -1,0 +1,7 @@
+[package]
+name = "nokhwa-core"
+version = "0.1.5"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

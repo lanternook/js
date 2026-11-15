@@ -1,0 +1,7 @@
+[package]
+name = "sciter-rs"
+version = "0.5.57"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

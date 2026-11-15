@@ -1,0 +1,7 @@
+[package]
+name = "keepawake"
+version = "0.4.3"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

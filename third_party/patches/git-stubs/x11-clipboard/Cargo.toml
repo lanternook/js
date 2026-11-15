@@ -1,0 +1,7 @@
+[package]
+name = "x11-clipboard"
+version = "0.8.1"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

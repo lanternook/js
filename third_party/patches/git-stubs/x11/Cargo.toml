@@ -1,0 +1,7 @@
+[package]
+name = "x11"
+version = "2.19.0"
+edition = "2021"
+
+[lib]
+path = "lib.rs"

@@ -1,0 +1,44 @@
+[package]
+name = "tokio-socks"
+description = "Asynchronous SOCKS proxy support for Rust."
+documentation = "https://docs.rs/tokio-socks"
+homepage = "https://github.com/sticnarf/tokio-socks"
+repository = "https://github.com/sticnarf/tokio-socks"
+readme = "README.md"
+categories = ["asynchronous", "network-programming"]
+keywords = ["tokio", "async", "proxy", "socks", "socks5"]
+license = "MIT"
+version = "0.5.2-3"
+authors = ["Yilin Chen <sticnarf@gmail.com>"]
+edition = "2018"
+
+[badges]
+travis-ci = { repository = "sticnarf/tokio-socks" }
+
+[features]
+tor = []
+
+[[example]]
+name = "socket"
+required-features = ["tor"]
+
+[[example]]
+name = "tor"
+required-features = ["tor"]
+
+[dependencies]
+futures-util = { version = "0.3", default-features = false }
+tokio = { version = "1.44", features = ["io-util", "net"] }
+tokio-util = { version = "0.7", features = ["codec", "net"] }
+futures-core = "0.3"
+futures-sink = "0.3"
+bytes = "1.10"
+either = "1.9"
+thiserror = "2.0"
+pin-project = "1.1"
+
+[dev-dependencies]
+futures-executor = "0.3"
+tokio = { version = "1.44", features = ["io-util", "rt-multi-thread", "net"] }
+once_cell = "1.21"
+hyper = "1.6"
