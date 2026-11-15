@@ -1,0 +1,2 @@
+*.sh text eol=lf
+*.cmake text eol=lf
