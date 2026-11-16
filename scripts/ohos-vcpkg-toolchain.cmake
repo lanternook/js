@@ -12,8 +12,11 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
 set(CMAKE_SYSROOT "${OHOS_NATIVE_SDK}/sysroot")
-set(CMAKE_C_COMPILER "${OHOS_NATIVE_SDK}/llvm/bin/clang")
-set(CMAKE_CXX_COMPILER "${OHOS_NATIVE_SDK}/llvm/bin/clang++")
+# Use the repo wrappers (they embed --target/--sysroot/-D__MUSL__) so that
+# configure/make-based ports (libvpx) also produce aarch64 objects; a bare
+# clang path would default to the host architecture.
+set(CMAKE_C_COMPILER "${CMAKE_CURRENT_LIST_DIR}/aarch64-unknown-linux-ohos-clang.sh")
+set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_LIST_DIR}/aarch64-unknown-linux-ohos-clang++.sh")
 set(CMAKE_C_COMPILER_TARGET aarch64-linux-ohos)
 set(CMAKE_CXX_COMPILER_TARGET aarch64-linux-ohos)
 set(CMAKE_AR "${OHOS_NATIVE_SDK}/llvm/bin/llvm-ar")
