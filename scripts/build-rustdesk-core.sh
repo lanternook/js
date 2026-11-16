@@ -28,13 +28,14 @@ fi
 
 # --- DEBUG: verify vcpkg archive member architectures ---
 # e_machine bytes at ELF offset 18: b700=aarch64, 3e00=x86_64, 2800=arm32
+VCVAR="$OHOS_NATIVE_SDK/llvm/bin/llvm-ar"
 if [ -d "$VCPKG_ROOT/installed/arm64-linux/lib" ]; then
   for A in "$VCPKG_ROOT/installed/arm64-linux/lib/"*.a; do
     N=$(basename "$A")
-    FIRST=$("$AR" t "$A" 2>/dev/null | head -1)
+    FIRST=$("$VCVAR" t "$A" 2>/dev/null | head -1)
     if [ -n "$FIRST" ]; then
       TDIR=$(mktemp -d)
-      (cd "$TDIR" && "$AR" x "$A" "$FIRST" 2>/dev/null)
+      (cd "$TDIR" && "$VCVAR" x "$A" "$FIRST" 2>/dev/null)
       F="$TDIR/$FIRST"
       if [ -f "$F" ]; then
         EM=$(od -An -tx1 -j18 -N2 "$F" | tr -d ' \n')
