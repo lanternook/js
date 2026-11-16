@@ -26,25 +26,8 @@ if [[ ! -x "${OHOS_NATIVE_SDK}/llvm/bin/clang" ]]; then
   exit 1
 fi
 
-# --- DEBUG: verify vcpkg archive member architectures ---
-# e_machine bytes at ELF offset 18: b700=aarch64, 3e00=x86_64, 2800=arm32
-VCVAR="$OHOS_NATIVE_SDK/llvm/bin/llvm-ar"
-if [ -d "$VCPKG_ROOT/installed/arm64-linux/lib" ]; then
-  for A in "$VCPKG_ROOT/installed/arm64-linux/lib/"*.a; do
-    N=$(basename "$A")
-    FIRST=$("$VCVAR" t "$A" 2>/dev/null | head -1)
-    if [ -n "$FIRST" ]; then
-      TDIR=$(mktemp -d)
-      (cd "$TDIR" && "$VCVAR" x "$A" "$FIRST" 2>/dev/null)
-      F="$TDIR/$FIRST"
-      if [ -f "$F" ]; then
-        EM=$(od -An -tx1 -j18 -N2 "$F" | tr -d ' \n')
-        echo "ARCHCHK $N member=$FIRST e_machine=$EM (expect b700=aarch64)"
-      fi
-      rm -rf "$TDIR"
-    fi
-  done
-fi
+# --- DEBUG: report vcpkg archive member architectures (non-fatal) ---
+bash "$ROOT_DIR/scripts/diag_arch.sh" 2>&1 || echo "diag_arch failed (ignored)"
 
 cd "${UPSTREAM_DIR}"
 "${CARGO:-${HOME}/.cargo/bin/cargo}" build \
