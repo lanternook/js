@@ -60,7 +60,7 @@ gstreamer-video = { version = "0.16", optional = true }
 zbus = { version = "3.15", optional = true }
 
 [dependencies.hwcodec]
-path = "E:/workbuddy/ohos-build/hwcodec-stub"
+path = "../../../patches/git-stubs/hwcodec"
 optional = true
 
 [target.'cfg(all(not(target_env = "ohos"), any(target_os = "windows", target_os = "linux")))'.dependencies]
