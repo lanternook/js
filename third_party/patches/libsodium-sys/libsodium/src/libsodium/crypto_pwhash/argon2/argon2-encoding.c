@@ -83,7 +83,7 @@ decode_decimal(const char *str, unsigned long *v)
  * output length must be in the allowed ranges defined in argon2.h.
  *
  * The ctx struct must contain buffers large enough to hold the salt and pwd
- * when it is fed into argon2_decode_string.
+ * when it is fed into decode_string.
  */
 
 /*
@@ -91,7 +91,7 @@ decode_decimal(const char *str, unsigned long *v)
  * Returned value is ARGON2_OK on success.
  */
 int
-argon2_decode_string(argon2_context *ctx, const char *str, argon2_type type)
+decode_string(argon2_context *ctx, const char *str, argon2_type type)
 {
 /* Prefix checking */
 #define CC(prefix)                               \
@@ -193,7 +193,7 @@ argon2_decode_string(argon2_context *ctx, const char *str, argon2_type type)
     BIN(ctx->salt, maxsaltlen, ctx->saltlen);
     CC("$");
     BIN(ctx->out, maxoutlen, ctx->outlen);
-    validation_result = argon2_validate_inputs(ctx);
+    validation_result = validate_inputs(ctx);
     if (validation_result != ARGON2_OK) {
         return validation_result;
     }
@@ -238,8 +238,7 @@ u32_to_string(char *str, uint32_t x)
  * On success, ARGON2_OK is returned.
  */
 int
-argon2_encode_string(char *dst, size_t dst_len, argon2_context *ctx,
-                     argon2_type type)
+encode_string(char *dst, size_t dst_len, argon2_context *ctx, argon2_type type)
 {
 #define SS(str)                          \
     do {                                 \
@@ -281,7 +280,7 @@ argon2_encode_string(char *dst, size_t dst_len, argon2_context *ctx,
     default:
         return ARGON2_ENCODING_FAIL;
     }
-    validation_result = argon2_validate_inputs(ctx);
+    validation_result = validate_inputs(ctx);
     if (validation_result != ARGON2_OK) {
         return validation_result;
     }

@@ -31,10 +31,9 @@
 #   define HAVE_LINUX_COMPATIBLE_GETRANDOM
 #  endif
 # endif
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__)
 # include <sys/param.h>
-# if (defined(__FreeBSD_version) && __FreeBSD_version >= 1200000) || \
-     (defined(__DragonFly_version) && __DragonFly_version >= 500700)
+# if defined(__FreeBSD_version) && __FreeBSD_version >= 1200000
 #  define HAVE_LINUX_COMPATIBLE_GETRANDOM
 # endif
 #endif
